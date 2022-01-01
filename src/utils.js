@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 13:28:14
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-01 13:35:24
+ * @LastEditTime: 2022-01-01 18:46:20
  */
 
 import { REACT_TEXT } from './constants';
@@ -17,6 +17,6 @@ import { REACT_TEXT } from './constants';
  */
 export function wrapToVdom(element) {
     return typeof element === 'string' || typeof element === 'number' ? {
-        typeof: REACT_TEXT, props: element
+        type: REACT_TEXT, props: element
     } : element;
 }
