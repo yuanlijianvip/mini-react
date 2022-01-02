@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-01 18:32:03
+ * @LastEditTime: 2022-01-02 12:09:05
  */
 import { REACT_TEXT } from './constants';
 
@@ -35,6 +35,12 @@ function createDOM(vdom) {
     let dom; //真实DOM
     if (type === REACT_TEXT) {
         dom = document.createTextNode(props);
+    } else if (typeof type === 'function') {
+        if (type.isReactComponent) {
+            return mountClassComponent(vdom);
+        } else {
+            return mountFunctionComponent(vdom);
+        }
     } else {
         dom = document.createElement(type);
     }
@@ -51,6 +57,26 @@ function createDOM(vdom) {
     vdom.dom = dom;
     return dom;
 }
+
+function mountFunctionComponent(vdom) {
+    //获取函数本身
+    let { type, props } = vdom;
+    //把函数对象传递给函数执行，返回要渲染的虚拟DOM
+    let renderVdom = type(props);
+    //vdom.老的要渲染的虚拟DOM=renderVdom,方便后面的DOM
+    vdom.oldRenderVdom = renderVdom;
+    return createDOM(renderVdom);
+}
+
+function mountClassComponent(vdom) {
+    //获取函数本身
+    let { type: ClassComponent, props } = vdom;
+    //把函数对象传递给函数执行，返回要渲染的虚拟DOM
+    let classInstance = new ClassComponent(props);
+    let renderVdom = classInstance.render();
+    return createDOM(renderVdom);
+}
+
 function reconcileChildren(children, parentDOM) {
     children.forEach((child, index) => {
         mount(child, parentDOM);

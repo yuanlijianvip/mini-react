@@ -4,11 +4,12 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-01 13:37:12
+ * @LastEditTime: 2022-01-02 12:02:45
  */
 
 import { REACT_ELEMENT } from './constants';
 import { wrapToVdom } from './utils';
+import { Component } from './Component';
 
 /**
  * @Author: yuanlijian
@@ -45,7 +46,8 @@ function createElement(type, config, children) {
 }
 
 const React = {
-    createElement
+    createElement,
+    Component
 }
 
 export default React;
