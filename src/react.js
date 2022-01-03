@@ -4,10 +4,10 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-02 12:02:45
+ * @LastEditTime: 2022-01-03 18:20:54
  */
 
-import { REACT_ELEMENT } from './constants';
+import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE } from './constants';
 import { wrapToVdom } from './utils';
 import { Component } from './Component';
 
@@ -44,10 +44,20 @@ function createElement(type, config, children) {
         props
     }
 }
-
+function createRef() {
+    return { current: null };
+}
+function forwardRef(render) {
+    return {
+        $$typeof: REACT_FORWARD_REF_TYPE,
+        render
+    }
+}
 const React = {
     createElement,
-    Component
+    Component,
+    createRef,
+    forwardRef
 }
 
 export default React;
