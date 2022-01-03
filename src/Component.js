@@ -4,9 +4,23 @@
  * @Author: yuanlijian
  * @Date: 2022-01-02 11:59:51
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-03 11:37:18
+ * @LastEditTime: 2022-01-03 13:26:35
  */
 import { findDOM, compareTwoVdom } from './react-dom';
+
+export let updateQueue = {
+    isBatchingUpdate: false, //更新队列中有一个标识，是否要执行批量更新
+    updaters: new Set(), //updater实例的集合
+    batchUpdate() {
+        for (let updater of updateQueue.updaters) {
+            updater.updateComponent();
+        }
+        //重置为false
+        updateQueue.isBatchingUpdate = false;
+        //清空update集合
+        updateQueue.updaters.clear();
+    }
+}
 class Updater {
     constructor(classInstance) {
         //类组件的实例
@@ -25,8 +39,15 @@ class Updater {
         this.emitUpdate();
     }
     emitUpdate() {
-        this.updateComponent();
+        //如果批量更新只需要把updater添加到队列里就可以了，不需要实时更新
+        if (updateQueue.isBatchingUpdate) {
+            updateQueue.updaters.add(this);
+        } else {
+            //否则直接更新
+            this.updateComponent();
+        }
     }
+    //更新这个updater对应的类组件
     updateComponent() {
         let { classInstance, pendingStates, callbacks } = this;
         //长度大于0说明当前正在准备要更新的分状态
