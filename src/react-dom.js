@@ -4,9 +4,10 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-03 10:49:51
+ * @LastEditTime: 2022-01-03 15:37:36
  */
 import { REACT_TEXT } from './constants';
+import { addEvent } from './event';
 
 function render(vdom, container) {
     mount(vdom, container);
@@ -103,7 +104,8 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
                 dom.style[attr] = styleObj[attr];
             }
         } else if (/^on[A-Z].*/.test(key)) {
-            dom[key.toLowerCase()] = newProps[key]; //TODO
+            // dom[key.toLowerCase()] = newProps[key]; //TODO
+            addEvent(dom, key.toLowerCase(), newProps[key]);
         } else {
             dom[key] = newProps[key];
         }
