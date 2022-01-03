@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-02 12:09:05
+ * @LastEditTime: 2022-01-03 10:49:51
  */
 import { REACT_TEXT } from './constants';
 
@@ -74,6 +74,7 @@ function mountClassComponent(vdom) {
     //把函数对象传递给函数执行，返回要渲染的虚拟DOM
     let classInstance = new ClassComponent(props);
     let renderVdom = classInstance.render();
+    vdom.oldRenderVdom = classInstance.oldRenderVdom = renderVdom;
     return createDOM(renderVdom);
 }
 
@@ -101,6 +102,8 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
             for (let attr in styleObj) {
                 dom.style[attr] = styleObj[attr];
             }
+        } else if (/^on[A-Z].*/.test(key)) {
+            dom[key.toLowerCase()] = newProps[key]; //TODO
         } else {
             dom[key] = newProps[key];
         }
@@ -112,7 +115,31 @@ function updateProps(dom, oldProps = {}, newProps = {}) {
         }
     }
 }
-
+export function findDOM(vdom) {
+    if (!vdom) return null;
+    //如果vdom上有dom属性，说明这个vdom是一个原生组件 span div p
+    if (vdom.dom) {
+        return vdom.dom; //返回它对应的真实DOM即可
+    } else {
+        //它可能一个函数组价或者类组件
+        let oldRenderVdom = vdom.oldRenderVdom;
+        return findDOM(oldRenderVdom);
+    }
+}
+/**
+ * @Author: yuanlijian
+ * @description: 进行DOM-DIFF对比
+ * @param {*} parentDOM 父真实DOM节点
+ * @param {*} oldVdom 老的虚拟DOM
+ * @param {*} newVdom 新的虚拟DOM
+ * @return {*}
+ */
+export function compareTwoVdom(parentDOM, oldVdom, newVdom) {
+    //获取老的真实DOM
+    let oldDOM = findDOM(oldVdom);
+    let newDOM = createDOM(newVdom);
+    parentDOM.replaceChild(newDOM, oldDOM);
+}
 const ReactDOM = {
     render
 }

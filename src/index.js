@@ -1,17 +1,28 @@
 import React from './react';
 import ReactDOM from './react-dom';
 
-class ClassComponent extends React.Component {
+class Counter extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { number: 0 };
+  }
+  handleClick = (amount) => {
+    this.setState((state)=>({number: state.number+amount}), () => {
+      console.log('callback', this.state);
+    });
+  }
   render() {
     return (
-      <h1 className="title" style={{ color: 'red' }}>
-        <span>{this.props.name}</span>
-        <span>{this.props.children}</span>
-      </h1>
+      <div>
+        <p>number:{this.state.number}</p>
+        <button onClick={() => this.handleClick(5)}>+</button>
+      </div>
     )
   }
 }
-let element = <ClassComponent name="hello">world</ClassComponent>
+
+
+let element = <Counter></Counter>
 console.log(element);
 ReactDOM.render(
   element,
