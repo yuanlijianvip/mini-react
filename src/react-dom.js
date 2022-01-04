@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-03 18:42:14
+ * @LastEditTime: 2022-01-04 16:16:09
  */
 import { REACT_TEXT, REACT_FORWARD_REF_TYPE } from './constants';
 import { addEvent } from './event';
@@ -22,7 +22,12 @@ function render(vdom, container) {
  */
 function mount(vdom, container) {
     let newDOM = createDOM(vdom);
-    container.appendChild(newDOM);
+    if (newDOM) {
+        //把子DOM挂在到父DOM
+        container.appendChild(newDOM);
+        //执行子DOM的挂载完成事件
+        if (newDOM.componentDidMount) newDOM.componentDidMount(); 
+    }
 }
 
 /**
@@ -82,11 +87,20 @@ function mountClassComponent(vdom) {
     let { type: ClassComponent, props, ref } = vdom;
     //把函数对象传递给函数执行，返回要渲染的虚拟DOM
     let classInstance = new ClassComponent(props);
+    //给虚拟DOM添加一个属性calssInstance
+    vdom.classInstance = classInstance;
     //让ref.current指向类组件的实例
     if (ref) ref.current = classInstance;
+    if (classInstance.componentWillMount) {
+        classInstance.componentWillMount();
+    }
     let renderVdom = classInstance.render();
-    vdom.oldRenderVdom = classInstance.oldRenderVdom = renderVdom;
-    return createDOM(renderVdom);
+    classInstance.oldRenderVdom = renderVdom;
+    let dom = createDOM(renderVdom);
+    if (classInstance.componentDidMount) {
+        dom.componentDidMount = classInstance.componentDidMount.bind(this);
+    }
+    return dom;
 }
 
 function reconcileChildren(children, parentDOM) {
@@ -134,7 +148,9 @@ export function findDOM(vdom) {
         return vdom.dom; //返回它对应的真实DOM即可
     } else {
         //它可能一个函数组价或者类组件
-        let oldRenderVdom = vdom.oldRenderVdom;
+        //如果是类组件，从vdom.classInstance.oldRenderVdom取要渲染的虚拟DOM
+        //如果是函数组件，从vdom.oldRenderVdom取要渲染的虚拟DOM
+        let oldRenderVdom = vdom.classInstance ? vdom.classInstance.oldRenderVdom : vdom.oldRenderVdom;
         return findDOM(oldRenderVdom);
     }
 }
@@ -146,11 +162,68 @@ export function findDOM(vdom) {
  * @param {*} newVdom 新的虚拟DOM
  * @return {*}
  */
-export function compareTwoVdom(parentDOM, oldVdom, newVdom) {
-    //获取老的真实DOM
-    let oldDOM = findDOM(oldVdom);
-    let newDOM = createDOM(newVdom);
-    parentDOM.replaceChild(newDOM, oldDOM);
+export function compareTwoVdom(parentDOM, oldVdom, newVdom, nextDOM) {
+    //如果新老都是null, 什么也不做
+    if(!oldVdom && !newVdom) {
+        return;
+        //如果说老的有，新的没有，需要删除老的
+    } else if (oldVdom && !newVdom) {
+        unMountVdom(oldVdom);
+    } else if (!oldVdom && newVdom) {
+        let newDOM = createDOM(newVdom);
+        if (nextDOM) { //nextDOM
+            parentDOM.insertBefore(newDOM, nextDOM);
+        } else {
+            parentDOM.appendChild(newDOM);
+        }
+        if (newDOM.componentDidMount) newDOM.componentDidMount();
+        //新老都有，但是类型不同，也不能复用
+    } else if (oldVdom && newVdom && oldVdom.type !== newVdom.type) {
+        unMountVdom(oldVdom);
+        let newDOM = createDOM(newVdom);
+        if (nextDOM) { //nextDOM
+            parentDOM.insertBefore(newDOM, nextDOM);
+        } else {
+            parentDOM.appendChild(newDOM);
+        }
+        parentDOM.appendChild(newDOM);
+        if (newDOM.componentDidMount) newDOM.componentDidMount();
+        //新的有，老的也有，并且还一样，可以复用老的真实DOM节点，就可以走深度比较逻辑了，进行比较属性和子节点的过程
+    } else {
+        updateElement(oldVdom, newVdom);
+    }
+}
+/**
+ * @Author: yuanlijian
+ * @description: 深度比较新老虚拟DOM的差异，把差异同步到真实DOM
+ * @param {*} oldVdom
+ * @param {*} newVdom
+ * @return {*}
+ */
+function updateElement(oldVdom, newVdom) {
+    console.log('oldVdom', oldVdom);
+    console.log('newVdom', newVdom);
+}
+function unMountVdom(vdom) {
+    let { type, props, ref } = vdom;
+    //获取当前的真实DOM
+    let currentDOM = findDOM(vdom);
+    //生命周期 vdom有classInstance说明这是一个类组件
+    if (vdom.classInstance && vdom.classInstance.componentWillUnmount) {
+        vdom.classInstance.componentWillUnmount();
+    }
+    if (ref) {
+        ref.current = null;
+    }
+    //递归删除子节点
+    if (props.children) {
+        let children = Array.isArray(props.children) ? props.children : [props.children];
+        children.forEach(unMountVdom);
+    }
+    //把此虚拟DOM对应的老的DOM节点从父节点中移除
+    if (currentDOM) {
+        currentDOM.parentNode.removeChild(currentDOM); 
+    }
 }
 const ReactDOM = {
     render

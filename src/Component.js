@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-02 11:59:51
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-03 13:26:35
+ * @LastEditTime: 2022-01-04 08:10:35
  */
 import { findDOM, compareTwoVdom } from './react-dom';
 
@@ -77,8 +77,20 @@ class Updater {
     }
 }
 function shouldUpdate(classInstance, nextState) {
+    //默认是要更新的
+    let willUpdate = true;
+    //如果有方法，并且此方法返回了false,那就不更新，如果没有此方法，或者返回了true就要继续向下更新组件
+    if (classInstance.shouldComponentUpdate && !classInstance.shouldComponentUpdate(null, nextState)) {
+        willUpdate = false;
+    }
+    //组件将要更新
+    if (willUpdate && classInstance.componentWillUpdate) {
+        classInstance.componentWillUpdate();
+    }
+    //不管要不要更新，都要把最新的状态赋给classInstance.state
     classInstance.state = nextState;
-    classInstance.forceUpdate();
+    if (willUpdate)
+        classInstance.forceUpdate();
 }
 export class Component {
     static isReactComponent = true;
@@ -100,5 +112,8 @@ export class Component {
         //把老的虚拟DOM和新的虚拟DOM进行对比，对比得到的差异更新到真实DOM
         compareTwoVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom);
         this.oldRenderVdom = newRenderVdom;
+        if (this.componentDidUpdate) {
+            this.componentDidUpdate(this.props, this.state);
+        }
     }
 }
