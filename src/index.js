@@ -1,62 +1,91 @@
 /*
- * @Description: 
- * @version: 
+ * @Description:
+ * @version:
  * @Author: yuanlijian
  * @Date: 2022-01-01 11:32:43
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-05 22:44:51
+ * @LastEditTime: 2022-01-06 00:05:10
  */
 
-import React from "./react";
-import ReactDOM from "./react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
-class ScrollList extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { messages: [] }
-    this.wrapper = React.createRef();
-  }
-  addMessage = () => {
-    this.setState({
-      messages: [`${this.state.messages.length}`, ...this.state.messages]
-    })
-  }
-  componentDidMount() {
-    this.timer = setInterval(() => {
-      this.addMessage();
-    }, 1000)
-  }
-  componentWillUnmount() {
-    clearInterval(this.timer);
-  }
-  getSnapshotBeforeUpdate() {
-    return {
-      prevScrollTop: this.wrapper.current.scrollTop, //100px
-      prevScrollHeight: this.wrapper.current.scrollHeight //200px
-    }
-  }
-  componentDidUpdate(prevProps, prevState, { prevScrollTop, prevScrollHeight }) {
-    this.wrapper.current.scrollTop = prevScrollTop + (this.wrapper.current.scrollHeight-prevScrollHeight);
-  }
+let ThemeContext = React.createContext();
+console.log(ThemeContext);
+const { Provider, Consumer } = ThemeContext;
+let style = { margin: '5px', padding: '5px' }
+
+function Title() {
+  return (
+    <Consumer>
+      {
+        (contextValue) => (
+          <div style={{...style, border: `5px solid ${contextValue.color}`}}>
+            Title
+          </div>
+        )
+      }
+    </Consumer>
+  )
+}
+class Header extends React.Component {
+  static contextType = ThemeContext;
   render() {
-    let style={
-      width: '200px',
-      height: '100px',
-      border: "1px solid red",
-      overflow: 'auto'
-    }
     return (
-      <div style={style} ref={this.wrapper}>
-        {
-          this.state.messages.map((message, index) => (
-            <div key={index}>{message}</div>
-          ))
-        }
+      <div style={{...style, border: `5px solid ${this.context.color}`}}>
+        Herder
+        <Title />
       </div>
     )
   }
 }
+function Content() {
+  return (
+    <Consumer>
+      {
+        (contextValue) => (
+          <div style={{...style, border: `5px solid ${contextValue.color}`}}>
+            Content
+            <button style={{color: 'red'}} onClick={()=>contextValue.changeColor('red')}>变红</button>
+            <button style={{color: 'green'}} onClick={()=>contextValue.changeColor('green')}>变绿</button>
+          </div>
+        )
+      }
+    </Consumer>
+  )
+}
+class Main extends React.Component {
+  static contextType = ThemeContext;
+  render() {
+    return (
+      <div style={{...style, border: `5px solid ${this.context.color}`}}>
+        Main
+        <Content />
+      </div>
+    )
+  }
+}
+class Page extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { color: "red" };
+  }
+  changeColor = (color) => {
+    this.setState({color});
+  }
+  render() {
+    let contextValue = {color: this.state.color, changeColor: this.changeColor};
+    return (
+      <Provider value={contextValue}>
+        <div style={{ ...style, width: '300px' }}>
+          <Header />
+          <Main />
+        </div>
+      </Provider>
+    );
+  }
+}
 
-let element = <ScrollList></ScrollList>;
-console.log(element);
+let element = <Page></Page>;
+// console.log(element);
 ReactDOM.render(element, document.getElementById("root"));
