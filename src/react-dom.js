@@ -4,9 +4,9 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-05 09:50:54
+ * @LastEditTime: 2022-01-05 19:54:21
  */
-import { REACT_TEXT, REACT_FORWARD_REF_TYPE } from './constants';
+import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT } from './constants';
 import { addEvent } from './event';
 
 function render(vdom, container) {
@@ -56,6 +56,7 @@ function createDOM(vdom) {
         updateProps(dom, {}, props);
         const children = props.children;
         if (typeof children === 'object' && children.type) {
+            children.mountIndex = 0;
             mount(children, dom);
         } else if (Array.isArray(children)) {
             reconcileChildren(children, dom);
@@ -105,6 +106,7 @@ function mountClassComponent(vdom) {
 
 function reconcileChildren(children, parentDOM) {
     children.forEach((child, index) => {
+        child.mountIndex = index;
         mount(child, parentDOM);
     });
 }
@@ -253,11 +255,63 @@ function updateClassComponent(oldVdom, newVdom) {
 function updateChildren(parentDOM, oldVChildren, newVChildren) {
     oldVChildren = (Array.isArray(oldVChildren) ? oldVChildren : [oldVChildren]).filter(item => item);
     newVChildren = (Array.isArray(newVChildren) ? newVChildren : [newVChildren]).filter(item => item);
-    let maxLength = Math.max(oldVChildren.length, newVChildren.length);
-    for (let i = 0; i < maxLength; i++) {
-        //在老的DOM树中找出 索引大于当前的索引，并且存在真实DOM那个虚拟DOM
-        let nextVdom = oldVChildren.find((item, index) => index > i && item && findDOM(item));
-        compareTwoVdom(parentDOM, oldVChildren[i], newVChildren[i], nextVdom && findDOM(nextVdom));
+    //把老节点存放到一个以key为属性，以节点为值的数组里
+    let keyedOldMap = {};
+    let lastPlacedIndex = 0;
+    oldVChildren.forEach((oldVChild, index) => {
+        keyedOldMap[oldVChild.key || index] = oldVChild;
+    })
+    //存放操作的补丁包
+    let patch = [];
+    newVChildren.forEach((newVChild, index) => {
+        let newKey = newVChild.key || index;
+        let oldVChild = keyedOldMap[newKey];
+        if (oldVChild) {
+            //更新老节点
+            updateElement(oldVChild, newVChild);
+            if (oldVChild.mountIndex < lastPlacedIndex) {
+                patch.push({
+                    type: MOVE,
+                    oldVChild,
+                    newVChild,
+                    mountIndex: index
+                });
+            }
+            //如果你复用了一个老节点，那就要从map中删除
+            delete keyedOldMap[newKey];
+            lastPlacedIndex = Math.max(lastPlacedIndex, oldVChild.mountIndex);
+        } else {
+            patch.push({
+                type: PLACEMENT,
+                newVChild,
+                mountIndex: index
+            })
+        }
+    });
+    //获取所有要移动的老节点
+    let moveChild = patch.filter(action => action.type === MOVE).map(action => action.oldVChild);
+    //把剩下的没有复用到的老节点和要移动的节点全部从DOM树中删除
+    Object.values(keyedOldMap).concat(moveChild).forEach(oldVChild => {
+        let currentDOM = findDOM(oldVChild);
+        parentDOM.removeChild(currentDOM);
+    });
+    if (patch.length) {
+        patch.forEach(action => {
+            let { type, oldVChild, newVChild, mountIndex } = action;
+            let childNodes = parentDOM.childNodes;
+            let currentDOM;
+            if (type === PLACEMENT) {
+                currentDOM = createDOM(newVChild);
+            } else if (type === MOVE) {
+                currentDOM = findDOM(oldVChild);
+            }
+            let childNode = childNodes[mountIndex];
+            if (childNode) {
+                parentDOM.insertBefore(currentDOM, childNode);
+            } else {
+                parentDOM.appendChild(currentDOM);
+            }
+        })
     }
 }
 function unMountVdom(vdom) {

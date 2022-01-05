@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-03 18:20:54
+ * @LastEditTime: 2022-01-05 19:49:33
  */
 
 import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE } from './constants';
@@ -53,11 +53,17 @@ function forwardRef(render) {
         render
     }
 }
+let Children = {
+    map(children, mapFn) {
+        return Array.flatten(children).map(mapFn);
+    }
+}
 const React = {
     createElement,
     Component,
     createRef,
-    forwardRef
+    forwardRef,
+    Children
 }
 
 export default React;
