@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-05 19:54:21
+ * @LastEditTime: 2022-01-05 22:44:17
  */
 import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT } from './constants';
 import { addEvent } from './event';
@@ -99,7 +99,7 @@ function mountClassComponent(vdom) {
     classInstance.oldRenderVdom = renderVdom;
     let dom = createDOM(renderVdom);
     if (classInstance.componentDidMount) {
-        dom.componentDidMount = classInstance.componentDidMount.bind(this);
+        dom.componentDidMount = classInstance.componentDidMount.bind(classInstance);
     }
     return dom;
 }

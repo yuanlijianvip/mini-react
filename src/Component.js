@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-02 11:59:51
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-05 09:38:42
+ * @LastEditTime: 2022-01-05 22:42:31
  */
 import { findDOM, compareTwoVdom } from './react-dom';
 
@@ -110,13 +110,18 @@ export class Component {
         let oldRenderVdom = this.oldRenderVdom;
         //获取虚拟DOM对应的真实DOM oldRenderVdom.dom
         let oldDOM = findDOM(oldRenderVdom);
+        if (this.constructor.getDerivedStateFromProps) {
+            let newState = this.constructor.getDerivedStateFromProps(this.props, this.state);
+            if (newState) this.state = { ...this.state, ...newState };
+        }
+        let snapshot = this.getSnapshotBeforeUpdate && this.getSnapshotBeforeUpdate();
         //重新执行render得到新的虚拟DOM
         let newRenderVdom = this.render();
         //把老的虚拟DOM和新的虚拟DOM进行对比，对比得到的差异更新到真实DOM
         compareTwoVdom(oldDOM.parentNode, oldRenderVdom, newRenderVdom);
         this.oldRenderVdom = newRenderVdom;
         if (this.componentDidUpdate) {
-            this.componentDidUpdate(this.props, this.state);
+            this.componentDidUpdate(this.props, this.state, snapshot);
         }
     }
 }
