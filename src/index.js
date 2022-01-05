@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 11:32:43
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-04 11:22:26
+ * @LastEditTime: 2022-01-05 09:38:54
  */
 
 import React from "./react";
@@ -59,15 +59,21 @@ class ChildCounter extends React.Component {
   componentDidMount() {
     console.log('ChildCounter 3.componentDidMount');
   }
-  componentWillReceiveProps() {
-    console.log('ChildCounter 4.componentWillReceiveProps');
+  componentWillReceiveProps(newProps) {
+    console.log('ChildCounter 4.componentWillReceiveProps', newProps);
   }
   shouldComponentUpdate(nextProps, nextState) {
     console.log('ChildCounter 5.shouldComponentUpdate');
     return nextProps.count % 3 === 0;
   }
   componentWillUnmount() {
-    console.log('ChildCounter 6.componentWillUnmount');
+    console.log('ChildCounter 8.componentWillUnmount');
+  }
+  componentWillUpdate() {
+    console.log('ChildCounter 6.componentWillUpdate');
+  }
+  componentDidUpdate() {
+    console.log('ChildCounter 7.componentDidUpdate');
   }
   render() {
     console.log('ChildCounter 2.render');

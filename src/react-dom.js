@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-04 16:16:09
+ * @LastEditTime: 2022-01-05 09:50:54
  */
 import { REACT_TEXT, REACT_FORWARD_REF_TYPE } from './constants';
 import { addEvent } from './event';
@@ -201,8 +201,64 @@ export function compareTwoVdom(parentDOM, oldVdom, newVdom, nextDOM) {
  * @return {*}
  */
 function updateElement(oldVdom, newVdom) {
-    console.log('oldVdom', oldVdom);
-    console.log('newVdom', newVdom);
+    if (oldVdom.type === REACT_TEXT) {
+        let currentDOM = newVdom.dom = findDOM(oldVdom);
+        if (oldVdom.props !== newVdom.props) {
+            currentDOM.textContent = newVdom.props;
+        }
+    } else if (typeof oldVdom.type === 'string') {
+        let currentDOM = newVdom.dom = findDOM(oldVdom);
+        updateProps(currentDOM, oldVdom.props, newVdom.props);
+        updateChildren(currentDOM, oldVdom.props.children, newVdom.props.children);
+    } else if (typeof oldVdom.type === 'function') {
+        //类组件
+        if (oldVdom.type.isReactComponent) {
+            //让新的虚拟DOM对象复用老的类组件的实例 //TODO
+            updateClassComponent(oldVdom, newVdom);
+        } else {
+            updateFunctionComponent(oldVdom, newVdom);
+        }
+    }
+}
+/**
+ * @Author: yuanlijian
+ * @description: 更新函数组件
+ * @param {*} oldVdom
+ * @param {*} newVdom
+ * @return {*}
+ */
+function updateFunctionComponent(oldVdom, newVdom) {
+    let currentDOM = findDOM(oldVdom); //TODO
+    if(!currentDOM) return;
+    let parentDOM = currentDOM.parentNode;
+    let { type, props } = newVdom;
+    let newRenderVdom = type(props);
+    compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, newRenderVdom);
+    newVdom.oldRenderVdom = newRenderVdom;
+}
+/**
+ * @Author: yuanlijian
+ * @description: 更新类组件
+ * @param {*} oldVdom
+ * @param {*} newVdom
+ * @return {*}
+ */
+function updateClassComponent(oldVdom, newVdom) {
+    let classInstance = newVdom.classInstance = oldVdom.classInstance;
+    if (classInstance.componentWillReceiveProps) {
+        classInstance.componentWillReceiveProps(newVdom.props);
+    }
+    classInstance.updater.emitUpdate(newVdom.props);
+}
+function updateChildren(parentDOM, oldVChildren, newVChildren) {
+    oldVChildren = (Array.isArray(oldVChildren) ? oldVChildren : [oldVChildren]).filter(item => item);
+    newVChildren = (Array.isArray(newVChildren) ? newVChildren : [newVChildren]).filter(item => item);
+    let maxLength = Math.max(oldVChildren.length, newVChildren.length);
+    for (let i = 0; i < maxLength; i++) {
+        //在老的DOM树中找出 索引大于当前的索引，并且存在真实DOM那个虚拟DOM
+        let nextVdom = oldVChildren.find((item, index) => index > i && item && findDOM(item));
+        compareTwoVdom(parentDOM, oldVChildren[i], newVChildren[i], nextVdom && findDOM(nextVdom));
+    }
 }
 function unMountVdom(vdom) {
     let { type, props, ref } = vdom;

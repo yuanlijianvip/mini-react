@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-03 14:55:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-03 16:00:01
+ * @LastEditTime: 2022-01-05 08:27:09
  */
 import { updateQueue } from './Component';
 /**
@@ -50,6 +50,7 @@ function dispatchEvent(nativeEvent) {
         }
         target = target.parentNode;
     }
+    // updateQueue.isBatchingUpdate = false;
     updateQueue.batchUpdate();
 }
 
