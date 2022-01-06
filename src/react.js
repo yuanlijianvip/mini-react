@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-06 08:59:19
+ * @LastEditTime: 2022-01-06 20:35:23
  */
 
 import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT } from './constants';
@@ -70,13 +70,31 @@ function createContext() {
     }
     return context;
 }
+function cloneElement(element, newProps, ...newChildren) {
+    let oldChildren = element.props && element.props.children;
+    oldChildren = (Array.isArray(oldChildren) ? oldChildren : [oldChildren]).filter(item => typeof item !== 'undefined').map(wrapToVdom);
+    newChildren = newChildren.filter(item => typeof item !== 'undefined').map(wrapToVdom);
+    let props = { ...element.props, ...newProps };
+    if (newChildren.length > 0) {
+        props.children = newChildren;
+    } else {
+        props.children = oldChildren;
+    }
+    if (props.children.length === 0) {
+        props.children = undefined;
+    } else if (props.children.length === 1) {
+        props.children = props.children[0];
+    }
+    return { ...element, props };
+}
 const React = {
     createElement,
     Component,
     createRef,
     forwardRef,
     Children,
-    createContext
+    createContext,
+    cloneElement
 }
 
 export default React;
