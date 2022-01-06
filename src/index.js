@@ -4,11 +4,11 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 11:32:43
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-06 00:05:10
+ * @LastEditTime: 2022-01-06 10:17:15
  */
 
-import React from "react";
-import ReactDOM from "react-dom";
+import React from "./react";
+import ReactDOM from "./react-dom";
 
 let ThemeContext = React.createContext();
 console.log(ThemeContext);
@@ -16,6 +16,7 @@ const { Provider, Consumer } = ThemeContext;
 let style = { margin: '5px', padding: '5px' }
 
 function Title() {
+  console.log('Title');
   return (
     <Consumer>
       {
@@ -31,6 +32,7 @@ function Title() {
 class Header extends React.Component {
   static contextType = ThemeContext;
   render() {
+    console.log('Header');
     return (
       <div style={{...style, border: `5px solid ${this.context.color}`}}>
         Herder
@@ -40,6 +42,7 @@ class Header extends React.Component {
   }
 }
 function Content() {
+  console.log('Content');
   return (
     <Consumer>
       {
@@ -57,6 +60,7 @@ function Content() {
 class Main extends React.Component {
   static contextType = ThemeContext;
   render() {
+    console.log('Main');
     return (
       <div style={{...style, border: `5px solid ${this.context.color}`}}>
         Main
@@ -68,16 +72,18 @@ class Main extends React.Component {
 class Page extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { color: "red" };
+    this.state = { color: "black" };
   }
   changeColor = (color) => {
     this.setState({color});
   }
   render() {
+    console.log('Page');
     let contextValue = {color: this.state.color, changeColor: this.changeColor};
     return (
       <Provider value={contextValue}>
-        <div style={{ ...style, width: '300px' }}>
+        <div style={{ ...style, width: '300px', border: `5px solid ${this.state.color}` }}>
+          Page
           <Header />
           <Main />
         </div>

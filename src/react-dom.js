@@ -4,9 +4,9 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-05 22:44:17
+ * @LastEditTime: 2022-01-06 10:07:56
  */
-import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT } from './constants';
+import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT } from './constants';
 import { addEvent } from './event';
 
 function render(vdom, container) {
@@ -41,6 +41,10 @@ function createDOM(vdom) {
     let dom; //真实DOM
     if (type && type.$$typeof === REACT_FORWARD_REF_TYPE) {
         return mountForwardComponent(vdom); //转发组件
+    } else if (type && type.$$typeof === REACT_PROVIDER) {
+        return mountProviderComponent(vdom);
+    } else if (type && type.$$typeof === REACT_CONTEXT) {
+        return mountContextComponent(vdom);
     } else if (type === REACT_TEXT) {
         dom = document.createTextNode(props);
     } else if (typeof type === 'function') {
@@ -67,6 +71,21 @@ function createDOM(vdom) {
     if (ref) ref.current = dom;
     return dom;
 }
+function mountProviderComponent(vdom) {
+    let { type, props } = vdom;
+    let context = type._context;
+    context._currentValue = props.value;
+    let renderVdom = props.children;
+    vdom.oldRenderVdom = renderVdom;
+    return createDOM(renderVdom);
+}
+function mountContextComponent(vdom) {
+    let { type, props } = vdom;
+    let context = type._context;
+    let renderVdom = props.children(context._currentValue);
+    vdom.oldRenderVdom = renderVdom;
+    return createDOM(renderVdom);
+}
 function mountForwardComponent(vdom) {
     let { type, props, ref } = vdom;
     let renderVdom = type.render(props, ref);
@@ -90,6 +109,9 @@ function mountClassComponent(vdom) {
     let classInstance = new ClassComponent(props);
     //给虚拟DOM添加一个属性calssInstance
     vdom.classInstance = classInstance;
+    if (ClassComponent.contextType) {
+        classInstance.context = ClassComponent.contextType._currentValue;
+    }
     //让ref.current指向类组件的实例
     if (ref) ref.current = classInstance;
     if (classInstance.componentWillMount) {
@@ -203,7 +225,11 @@ export function compareTwoVdom(parentDOM, oldVdom, newVdom, nextDOM) {
  * @return {*}
  */
 function updateElement(oldVdom, newVdom) {
-    if (oldVdom.type === REACT_TEXT) {
+    if (oldVdom.type.$$typeof === REACT_CONTEXT) {
+        updateContextComponent(oldVdom, newVdom);
+    } else if (oldVdom.type.$$typeof === REACT_PROVIDER) {
+        updateProviderComponent(oldVdom, newVdom);
+    } else if (oldVdom.type === REACT_TEXT) {
         let currentDOM = newVdom.dom = findDOM(oldVdom);
         if (oldVdom.props !== newVdom.props) {
             currentDOM.textContent = newVdom.props;
@@ -222,6 +248,28 @@ function updateElement(oldVdom, newVdom) {
         }
     }
 }
+function updateProviderComponent(oldVdom, newVdom) {
+    let currentDOM = findDOM(oldVdom);
+    if (!currentDOM) return;
+    let parentDOM = currentDOM.parentNode;
+    let { type, props } = newVdom;
+    let context = type._context;
+    context._currentValue = props.value;
+    let newRenderVdom = props.children;
+    compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, newRenderVdom);
+    newVdom.oldRenderVdom = newRenderVdom;
+}
+function updateContextComponent(oldVdom, newVdom) {
+    let currentDOM = findDOM(oldVdom);
+    if (!currentDOM) return;
+    let parentDOM = currentDOM.parentNode;
+    let { type, props } = newVdom;
+    let context = type._context;
+    let newRenderVdom = props.children(context._currentValue);
+    compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, newRenderVdom);
+    newVdom.oldRenderVdom = newRenderVdom;
+}
+
 /**
  * @Author: yuanlijian
  * @description: 更新函数组件
