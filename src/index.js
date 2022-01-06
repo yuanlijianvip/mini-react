@@ -4,94 +4,48 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 11:32:43
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-06 10:17:15
+ * @LastEditTime: 2022-01-06 11:45:32
  */
 
-import React from "./react";
-import ReactDOM from "./react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 
-let ThemeContext = React.createContext();
-console.log(ThemeContext);
-const { Provider, Consumer } = ThemeContext;
-let style = { margin: '5px', padding: '5px' }
-
-function Title() {
-  console.log('Title');
-  return (
-    <Consumer>
-      {
-        (contextValue) => (
-          <div style={{...style, border: `5px solid ${contextValue.color}`}}>
-            Title
-          </div>
-        )
+/**
+ * 高阶组件有两种用法
+ * 1.属性代理  2.反向继承
+ */
+const withLoading = message => OldComponent => {
+  return class extends React.Component {
+    render() {
+      const state = {
+        show() {
+          let div = document.createElement('div');
+          div.id = 'loadingDiv';
+          div.innerHTML = `<p style="position:absolute;top:100px;z-index:10;background-color:gray">${message}</p>`
+          document.body.appendChild(div);
+        },
+        hide() {
+          document.getElementById('loadingDiv').remove();
+        }
       }
-    </Consumer>
-  )
+      return <OldComponent {...this.props} {...state}/>
+    }
+  }
 }
-class Header extends React.Component {
-  static contextType = ThemeContext;
+
+@withLoading('加载中......')
+class App extends React.Component {
   render() {
-    console.log('Header');
     return (
-      <div style={{...style, border: `5px solid ${this.context.color}`}}>
-        Herder
-        <Title />
+      <div>
+        <p>App</p>
+        <button onClick={this.props.show}>show</button>
+        <button onClick={this.props.hide}>hide</button>
       </div>
     )
   }
 }
-function Content() {
-  console.log('Content');
-  return (
-    <Consumer>
-      {
-        (contextValue) => (
-          <div style={{...style, border: `5px solid ${contextValue.color}`}}>
-            Content
-            <button style={{color: 'red'}} onClick={()=>contextValue.changeColor('red')}>变红</button>
-            <button style={{color: 'green'}} onClick={()=>contextValue.changeColor('green')}>变绿</button>
-          </div>
-        )
-      }
-    </Consumer>
-  )
-}
-class Main extends React.Component {
-  static contextType = ThemeContext;
-  render() {
-    console.log('Main');
-    return (
-      <div style={{...style, border: `5px solid ${this.context.color}`}}>
-        Main
-        <Content />
-      </div>
-    )
-  }
-}
-class Page extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { color: "black" };
-  }
-  changeColor = (color) => {
-    this.setState({color});
-  }
-  render() {
-    console.log('Page');
-    let contextValue = {color: this.state.color, changeColor: this.changeColor};
-    return (
-      <Provider value={contextValue}>
-        <div style={{ ...style, width: '300px', border: `5px solid ${this.state.color}` }}>
-          Page
-          <Header />
-          <Main />
-        </div>
-      </Provider>
-    );
-  }
-}
-
-let element = <Page></Page>;
+// const WithLoadingApp = withLoading('加载中......')(App);
+let element = <App></App>;
 // console.log(element);
 ReactDOM.render(element, document.getElementById("root"));
