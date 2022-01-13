@@ -4,9 +4,10 @@
  * @Author: yuanlijian
  * @Date: 2022-01-02 11:59:51
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-06 09:54:19
+ * @LastEditTime: 2022-01-07 09:39:55
  */
 import { findDOM, compareTwoVdom } from './react-dom';
+import { shallowEqual } from './utils';
 
 export let updateQueue = {
     isBatchingUpdate: false, //更新队列中有一个标识，是否要执行批量更新
@@ -127,5 +128,11 @@ export class Component {
         if (this.componentDidUpdate) {
             this.componentDidUpdate(this.props, this.state, snapshot);
         }
+    }
+}
+
+export class PureComponent extends Component {
+    shouldComponentUpdate(newProps, nextState) {
+        return !shallowEqual(this.props, newProps) || !shallowEqual(this.state, nextState);
     }
 }

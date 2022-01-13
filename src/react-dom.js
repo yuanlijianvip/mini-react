@@ -4,9 +4,9 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-06 10:07:56
+ * @LastEditTime: 2022-01-13 21:52:11
  */
-import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT } from './constants';
+import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
 import { addEvent } from './event';
 
 function render(vdom, container) {
@@ -39,7 +39,9 @@ function mount(vdom, container) {
 function createDOM(vdom) {
     let { type, props, ref } = vdom;
     let dom; //真实DOM
-    if (type && type.$$typeof === REACT_FORWARD_REF_TYPE) {
+    if (type && type.$$typeof === REACT_MEMO) {
+        return mountMemoComponent(vdom);
+    } else if (type && type.$$typeof === REACT_FORWARD_REF_TYPE) {
         return mountForwardComponent(vdom); //转发组件
     } else if (type && type.$$typeof === REACT_PROVIDER) {
         return mountProviderComponent(vdom);
@@ -70,6 +72,14 @@ function createDOM(vdom) {
     vdom.dom = dom;
     if (ref) ref.current = dom;
     return dom;
+}
+function mountMemoComponent(vdom) {
+    let { type: { type: functionComponent }, props } = vdom;
+    let renderVdom = functionComponent(props);
+    //记录一下老的属性对象
+    vdom.prevProps = props;
+    vdom.oldRenderVdom = renderVdom;
+    return createDOM(renderVdom);
 }
 function mountProviderComponent(vdom) {
     let { type, props } = vdom;
@@ -225,7 +235,9 @@ export function compareTwoVdom(parentDOM, oldVdom, newVdom, nextDOM) {
  * @return {*}
  */
 function updateElement(oldVdom, newVdom) {
-    if (oldVdom.type.$$typeof === REACT_CONTEXT) {
+    if (oldVdom.type.$$typeof === REACT_MEMO) {
+        updateMemoComponent(oldVdom, newVdom);
+    } else if (oldVdom.type.$$typeof === REACT_CONTEXT) {
         updateContextComponent(oldVdom, newVdom);
     } else if (oldVdom.type.$$typeof === REACT_PROVIDER) {
         updateProviderComponent(oldVdom, newVdom);
@@ -246,6 +258,25 @@ function updateElement(oldVdom, newVdom) {
         } else {
             updateFunctionComponent(oldVdom, newVdom);
         }
+    }
+}
+function updateMemoComponent(oldVdom, newVdom) {
+    // 1.获取老的虚拟DOM的比较，方法和老的属性对象
+    let { type: { compare }, prevProps } = oldVdom;
+    //比较 老属性对象和新虚拟DOM的属性对象
+    if (!compare(prevProps, newVdom.props)) {
+        //如果不一样，就要重新渲染，执行dom diff
+        let currentDOM = findDOM(oldVdom);
+        if (!currentDOM) return;
+        let parentDOM = currentDOM.parentNode;
+        let { type: { type: functionComponent }, props } = newVdom;
+        let newRenderVdom = functionComponent(props);
+        compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, newRenderVdom);
+        newVdom.prevProps = props;
+        newVdom.oldRenderVdom = newRenderVdom;
+    } else {
+        newVdom.prevProps = prevProps;
+        newVdom.oldRenderVdom = oldVdom.oldRenderVdom;
     }
 }
 function updateProviderComponent(oldVdom, newVdom) {

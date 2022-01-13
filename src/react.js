@@ -4,12 +4,12 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-06 20:35:23
+ * @LastEditTime: 2022-01-13 21:53:34
  */
 
-import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT } from './constants';
-import { wrapToVdom } from './utils';
-import { Component } from './Component';
+import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
+import { wrapToVdom, shallowEqual } from './utils';
+import { Component, PureComponent } from './Component';
 
 /**
  * @Author: yuanlijian
@@ -87,6 +87,20 @@ function cloneElement(element, newProps, ...newChildren) {
     }
     return { ...element, props };
 }
+/**
+ * @Author: yuanlijian
+ * @description: 返回一个可以在属性不变的时候不重新渲染的组件
+ * @param {*} type 函数组件
+ * @param {*} compare 比较 属性是否相同的方法
+ * @return {*}
+ */
+function memo(type, compare = shallowEqual) {
+    return {
+        $$typeof: REACT_MEMO,
+        compare,
+        type
+    }
+}
 const React = {
     createElement,
     Component,
@@ -94,7 +108,9 @@ const React = {
     forwardRef,
     Children,
     createContext,
-    cloneElement
+    cloneElement,
+    PureComponent,
+    memo
 }
 
 export default React;

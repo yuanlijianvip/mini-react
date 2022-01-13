@@ -4,39 +4,52 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 11:32:43
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-06 21:54:22
+ * @LastEditTime: 2022-01-13 21:52:41
  */
 
 import React from "./react";
 import ReactDOM from "./react-dom";
 
-class MouseTracker extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { x: 0, y: 0 }
+class ClassCounter extends React.PureComponent {
+  render() {
+    console.log('ClassCounter');
+    return (
+      <div>ClassCounter:{this.props.count}</div>
+    )
   }
-  handleMouseMove = (event) => {
-    this.setState({
-      x: event.clientX,
-      y: event.clientY
-    })
+}
+
+function FunctionCounter(props) {
+  console.log('Function Counter');
+  return (
+    <div>FunctionCounter: {props.count}</div>
+  )
+}
+//新组件就有类似于PureComponent的功能了
+const MemoFunctionCounter = React.memo(FunctionCounter);
+class App extends React.Component {
+  constructor() {
+    super();
+    this.state = { number: 0 };
+    this.amountRef = React.createRef();
+  }
+  handleClick = (event) => {
+    let number = this.state.number + parseInt(this.amountRef.current.value);
+    this.setState({ number });
   }
   render() {
     return (
-      <div onMouseMove={this.handleMouseMove} style={{ border: '1px solid red' }}>
-        {this.props.render(this.state)}
+      <div>
+        <p>{this.state.number}</p>
+        <ClassCounter count={this.state.number}/>
+        <MemoFunctionCounter count={this.state.number}/>
+        <input ref={this.amountRef}/>
+        <button onClick={this.handleClick}>+</button>
       </div>
     )
   }
 }
-let element = <MouseTracker render={
-  (props) => (
-    <div>
-      <h1>移动一下鼠标</h1>
-      <p>当前鼠标的位置是{props.x},{props.y}</p>
-    </div>
-  )
-}>
-</MouseTracker>;
+
+let element = <App></App>;
 // console.log(element);
 ReactDOM.render(element, document.getElementById("root"));
