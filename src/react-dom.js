@@ -4,13 +4,31 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-13 21:52:11
+ * @LastEditTime: 2022-01-14 09:27:06
  */
 import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
 import { addEvent } from './event';
 
+//保存hook状态值的数组
+let hookStates = [];
+let hookIndex = 0;
+let scheduleUpdate;
 function render(vdom, container) {
     mount(vdom, container);
+    scheduleUpdate = () => {
+        hookIndex = 0;
+        compareTwoVdom(container, vdom, vdom);
+    }
+}
+
+export function useState(initialState) {
+    hookStates[hookIndex] = hookStates[hookIndex] || initialState;
+    const currentIndex = hookIndex;
+    function setState(newState) {
+        hookStates[currentIndex] = newState;
+        scheduleUpdate();
+    }
+    return [hookStates[hookIndex++], setState];
 }
 
 /**
