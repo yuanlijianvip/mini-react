@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-14 09:27:06
+ * @LastEditTime: 2022-01-15 09:49:36
  */
 import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
 import { addEvent } from './event';
@@ -18,6 +18,45 @@ function render(vdom, container) {
     scheduleUpdate = () => {
         hookIndex = 0;
         compareTwoVdom(container, vdom, vdom);
+    }
+}
+
+export function useMemo(factory, deps) {
+    //先判断有没有老值
+    if (hookStates[hookIndex]) {
+        let [oldMemo, oldDeps] = hookStates[hookIndex];
+        //判断依赖数组的每一个元素和老的依赖数组中的每一个元素是否相同
+        let same = deps.every((dep, index) => dep === oldDeps[index]);
+        if (same) {
+            hookIndex++;
+            return oldMemo;
+        } else {
+            let newMemo = factory();
+            hookStates[hookIndex++] = [newMemo, deps];
+            return newMemo;
+        }
+    } else {
+        let newMemo = factory(); 
+        hookStates[hookIndex] = [newMemo, deps];
+        return newMemo;
+    }
+}
+export function useCallback(callback, deps) {
+    //先判断有没有老值
+    if (hookStates[hookIndex]) {
+        let [oldCallback, oldDeps] = hookStates[hookIndex];
+        //判断依赖数组的每一个元素和老的依赖数组中的每一个元素是否相同
+        let same = deps.every((dep, index) => dep === oldDeps[index]);
+        if (same) {
+            hookIndex++;
+            return oldCallback;
+        } else {
+            hookStates[hookIndex++] = [callback, deps];
+            return callback;
+        }
+    } else {
+        hookStates[hookIndex] = [callback, deps];
+        return callback;
     }
 }
 
