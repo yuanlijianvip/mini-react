@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-15 09:49:36
+ * @LastEditTime: 2022-01-15 10:57:09
  */
 import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
 import { addEvent } from './event';
@@ -59,15 +59,17 @@ export function useCallback(callback, deps) {
         return callback;
     }
 }
-
-export function useState(initialState) {
+export function useReducer(reducer, initialState) {
     hookStates[hookIndex] = hookStates[hookIndex] || initialState;
-    const currentIndex = hookIndex;
-    function setState(newState) {
-        hookStates[currentIndex] = newState;
+    let currentIndex = hookIndex;
+    function dispatch(action) {
+        hookStates[currentIndex] = reducer ? reducer(hookStates[currentIndex], action) : action;
         scheduleUpdate();
     }
-    return [hookStates[hookIndex++], setState];
+    return [hookStates[hookIndex++], dispatch];
+}
+export function useState(initialState) {
+    return useReducer(null, initialState);
 }
 
 /**
