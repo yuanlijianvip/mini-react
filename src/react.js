@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-15 10:54:00
+ * @LastEditTime: 2022-01-17 08:59:52
  */
 
 import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
@@ -60,7 +60,7 @@ let Children = {
     }
 }
 function createContext() {
-    let context = { $$typeof: REACT_CONTEXT };
+    let context = { $$typeof: REACT_CONTEXT, _currentValue: null };
     context.Provider = {
         $$typeof: REACT_PROVIDER,
         _context: context
@@ -102,6 +102,9 @@ function memo(type, compare = shallowEqual) {
         type
     }
 }
+function useContext(context) {
+    return context._currentValue;
+}
 const React = {
     createElement,
     Component,
@@ -115,7 +118,8 @@ const React = {
     useState,
     useMemo,
     useCallback,
-    useReducer
+    useReducer,
+    useContext
 }
 
 export default React;

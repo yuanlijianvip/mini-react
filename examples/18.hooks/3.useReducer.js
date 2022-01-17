@@ -4,13 +4,11 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 11:32:43
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-17 09:03:20
+ * @LastEditTime: 2022-01-17 09:02:55
  */
 
 import React from "./react";
 import ReactDOM from "./react-dom";
-const CounterContext = React.createContext();
-
 function reducer(state = { number: 0 }, action) {
   switch(action.type) {
     case 'ADD':
@@ -22,7 +20,7 @@ function reducer(state = { number: 0 }, action) {
   }
 }
 function Counter() {
-    let { state, dispatch } = React.useContext(CounterContext);
+  const [state, dispatch] = React.useReducer(reducer, { number: 0 });
   return (
     <div>
       <p>{state.number}</p>
@@ -31,15 +29,8 @@ function Counter() {
     </div>
   )
 }
-function App() {
-    const [state, dispatch] = React.useReducer(reducer, { number: 0 });
-    return (
-        <CounterContext.Provider value={{ state, dispatch }}>
-            <Counter />
-        </CounterContext.Provider>
-    )
-}
 
-let element = <App></App>;
+let element = <Counter></Counter>;
 // console.log(element);
 ReactDOM.render(element, document.getElementById("root"));
+
