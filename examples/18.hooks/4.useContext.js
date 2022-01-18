@@ -4,13 +4,13 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-18 08:38:34
+ * @LastEditTime: 2022-01-17 08:59:52
  */
 
 import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
 import { wrapToVdom, shallowEqual } from './utils';
 import { Component, PureComponent } from './Component';
-import { useState, useMemo, useCallback, useReducer, useEffect } from './react-dom';
+import { useState, useMemo, useCallback, useReducer } from './react-dom';
 
 /**
  * @Author: yuanlijian
@@ -119,8 +119,7 @@ const React = {
     useMemo,
     useCallback,
     useReducer,
-    useContext,
-    useEffect
+    useContext
 }
 
 export default React;

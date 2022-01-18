@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-15 10:57:09
+ * @LastEditTime: 2022-01-18 09:46:19
  */
 import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
 import { addEvent } from './event';
@@ -26,7 +26,7 @@ export function useMemo(factory, deps) {
     if (hookStates[hookIndex]) {
         let [oldMemo, oldDeps] = hookStates[hookIndex];
         //判断依赖数组的每一个元素和老的依赖数组中的每一个元素是否相同
-        let same = deps.every((dep, index) => dep === oldDeps[index]);
+        let same = deps && deps.every((dep, index) => dep === oldDeps[index]);
         if (same) {
             hookIndex++;
             return oldMemo;
@@ -46,7 +46,7 @@ export function useCallback(callback, deps) {
     if (hookStates[hookIndex]) {
         let [oldCallback, oldDeps] = hookStates[hookIndex];
         //判断依赖数组的每一个元素和老的依赖数组中的每一个元素是否相同
-        let same = deps.every((dep, index) => dep === oldDeps[index]);
+        let same = deps && deps.every((dep, index) => dep === oldDeps[index]);
         if (same) {
             hookIndex++;
             return oldCallback;
@@ -59,11 +59,49 @@ export function useCallback(callback, deps) {
         return callback;
     }
 }
+export function useEffect(callback, deps) {
+    let currentIndex = hookIndex;
+    if (hookStates[hookIndex]) {
+        let [lastDestroy, oldDeps] = hookStates[hookIndex];
+        let same = deps && deps.every((dep, index) => dep === oldDeps[index]);
+        if (same) {
+            hookIndex++;
+        } else {
+            lastDestroy && lastDestroy();
+            let timer = setTimeout(()=> {
+                //执行callback函数，返回一个销毁函数
+                let destroy = callback();
+                hookStates[currentIndex] = [destroy, deps];
+                clearTimeout(timer);
+            });
+            hookIndex++;
+        }
+    } else {
+        //开启一个新的宏任务
+        let timer = setTimeout(() => {
+            //执行callback函数，返回一个销毁函数
+            let destroy = callback();
+            hookStates[currentIndex] = [destroy, deps];
+            clearTimeout(timer);
+        })
+        hookIndex++;
+    }
+}
 export function useReducer(reducer, initialState) {
     hookStates[hookIndex] = hookStates[hookIndex] || initialState;
     let currentIndex = hookIndex;
     function dispatch(action) {
-        hookStates[currentIndex] = reducer ? reducer(hookStates[currentIndex], action) : action;
+        //1.获取老状态
+        let oldState = hookStates[currentIndex];
+        //如果有reducer就是用reducer计算新状态
+        if (reducer) {
+            let newState = reducer(oldState, action);
+            hookStates[currentIndex] = newState;
+        } else {
+            //判断action是不是函数，如果是传入老状态，计算新状态
+            let newState = typeof action === 'function' ? action(oldState) : action;
+            hookStates[currentIndex] = newState;
+        }
         scheduleUpdate();
     }
     return [hookStates[hookIndex++], dispatch];
