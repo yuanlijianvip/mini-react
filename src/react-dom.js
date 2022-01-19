@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-18 09:46:19
+ * @LastEditTime: 2022-01-19 13:12:37
  */
 import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
 import { addEvent } from './event';
@@ -59,6 +59,10 @@ export function useCallback(callback, deps) {
         return callback;
     }
 }
+export function useRef(initialState) {
+    hookStates[hookIndex] = hookStates[hookIndex] || { current: initialState };
+    return hookStates[hookIndex++];
+}
 export function useEffect(callback, deps) {
     let currentIndex = hookIndex;
     if (hookStates[hookIndex]) {
@@ -83,6 +87,32 @@ export function useEffect(callback, deps) {
             let destroy = callback();
             hookStates[currentIndex] = [destroy, deps];
             clearTimeout(timer);
+        })
+        hookIndex++;
+    }
+}
+export function useLayoutEffect(callback, deps) {
+    let currentIndex = hookIndex;
+    if (hookStates[hookIndex]) {
+        let [lastDestroy, oldDeps] = hookStates[hookIndex];
+        let same = deps && deps.every((dep, index) => dep === oldDeps[index]);
+        if (same) {
+            hookIndex++;
+        } else {
+            lastDestroy && lastDestroy();
+            queueMicrotask(()=> {
+                //执行callback函数，返回一个销毁函数
+                let destroy = callback();
+                hookStates[currentIndex] = [destroy, deps];
+            })
+            hookIndex++;
+        }
+    } else {
+        //开启一个新的微任务
+        queueMicrotask(() => {
+            //执行callback函数，返回一个销毁函数
+            let destroy = callback();
+            hookStates[currentIndex] = [destroy, deps];
         })
         hookIndex++;
     }
