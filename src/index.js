@@ -4,39 +4,24 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 11:32:43
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-22 23:46:28
+ * @LastEditTime: 2022-01-23 01:05:56
  */
 
 import React from "./react";
 import ReactDOM from "./react-dom";
-function Child(props, forwardRef) {
-    const inputRef = React.useRef();
-    React.useImperativeHandle(forwardRef, () => ({
-        focus() {
-            inputRef.current.focus();
-        }
-    }))
-    return (<input ref={inputRef}/>)
-}
-
-const ForwardedChild = React.forwardRef(Child);
-
-function Parent() {
-    let [number, setNumber] = React.useState(0);
-    let inputRef = React.useRef();
-    let getFocus = () => {
-        inputRef.current.focus();
-    }
+function App() {
+    console.log(<React.Fragment>
+        <p>p1</p>
+        <p>p2</p>
+    </React.Fragment>);
     return (
-        <div>
-            <ForwardedChild ref={inputRef}/>
-            <button onClick={getFocus}>获得焦点</button>
-            <p>{number}</p>
-            <button onClick={() => setNumber(number + 1)}>+</button>
-        </div>
+        <React.Fragment>
+            <p>p1</p>
+            <p>p2</p>
+        </React.Fragment>
     )
 }
 
-let element = <Parent></Parent>;
+let element = <App></App>;
 // console.log(element);
 ReactDOM.render(element, document.getElementById("root"));

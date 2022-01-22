@@ -4,10 +4,10 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-22 23:45:06
+ * @LastEditTime: 2022-01-23 00:40:57
  */
 
-import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
+import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO, REACT_FRAGMENT } from './ReactSymbols';
 import { wrapToVdom, shallowEqual } from './utils';
 import { Component, PureComponent } from './Component';
 import { useState, useMemo, useCallback, useReducer, useEffect, useLayoutEffect, useRef } from './react-dom';
@@ -126,7 +126,8 @@ const React = {
     useEffect,
     useLayoutEffect,
     useRef,
-    useImperativeHandle
+    useImperativeHandle,
+    Fragment: REACT_FRAGMENT
 }
 
 export default React;

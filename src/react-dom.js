@@ -4,9 +4,10 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 15:00:18
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-19 13:12:37
+ * @LastEditTime: 2022-01-23 01:06:38
  */
-import { REACT_TEXT, REACT_FORWARD_REF_TYPE, MOVE, PLACEMENT, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
+import { REACT_TEXT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO, REACT_FRAGMENT } from './ReactSymbols';
+import { MOVE, PLACEMENT } from './ReactFlags';
 import { addEvent } from './event';
 
 //保存hook状态值的数组
@@ -164,9 +165,13 @@ function mount(vdom, container) {
  * @return {*}
  */
 function createDOM(vdom) {
-    let { type, props, ref } = vdom;
+    let { type, props, ref, $$typeof } = vdom;
     let dom; //真实DOM
-    if (type && type.$$typeof === REACT_MEMO) {
+    if (type && type === REACT_FRAGMENT) {
+        dom = document.createDocumentFragment();
+    } else if ($$typeof && $$typeof === REACT_TEXT) {
+        dom = document.createTextNode(props);
+    } else if (type && type.$$typeof === REACT_MEMO) {
         return mountMemoComponent(vdom);
     } else if (type && type.$$typeof === REACT_FORWARD_REF_TYPE) {
         return mountForwardComponent(vdom); //转发组件
@@ -174,8 +179,6 @@ function createDOM(vdom) {
         return mountProviderComponent(vdom);
     } else if (type && type.$$typeof === REACT_CONTEXT) {
         return mountContextComponent(vdom);
-    } else if (type === REACT_TEXT) {
-        dom = document.createTextNode(props);
     } else if (typeof type === 'function') {
         if (type.isReactComponent) {
             return mountClassComponent(vdom);
@@ -188,12 +191,12 @@ function createDOM(vdom) {
     if (props) {
         updateProps(dom, {}, props);
         const children = props.children;
-        if (typeof children === 'object' && children.type) {
+        if (Array.isArray(children)) {
+            reconcileChildren(children, dom);
+        } else if (typeof children === 'object' && children.$$typeof) {
             children.mountIndex = 0;
             mount(children, dom);
-        } else if (Array.isArray(children)) {
-            reconcileChildren(children, dom);
-        }
+        } 
     }
     //让vdom的dom属性指定它创建出来的真实DOM
     vdom.dom = dom;

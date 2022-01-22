@@ -4,10 +4,10 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 13:28:14
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-07 09:48:46
+ * @LastEditTime: 2022-01-23 00:35:40
  */
 
-import { REACT_TEXT } from './constants';
+import { REACT_TEXT } from './ReactSymbols';
 
 /**
  * @Author: yuanlijian
@@ -17,7 +17,7 @@ import { REACT_TEXT } from './constants';
  */
 export function wrapToVdom(element) {
     return typeof element === 'string' || typeof element === 'number' ? {
-        type: REACT_TEXT, props: element
+        $$typeof: REACT_TEXT, props: element
     } : element;
 }
 
