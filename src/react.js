@@ -4,7 +4,7 @@
  * @Author: yuanlijian
  * @Date: 2022-01-01 12:44:05
  * @LastEditors: yuanlijian
- * @LastEditTime: 2022-01-19 12:48:56
+ * @LastEditTime: 2022-01-22 23:45:06
  */
 
 import { REACT_ELEMENT, REACT_FORWARD_REF_TYPE, REACT_PROVIDER, REACT_CONTEXT, REACT_MEMO } from './constants';
@@ -105,6 +105,9 @@ function memo(type, compare = shallowEqual) {
 function useContext(context) {
     return context._currentValue;
 }
+function useImperativeHandle(ref, factory) {
+    ref.current = factory();
+}
 const React = {
     createElement,
     Component,
@@ -122,7 +125,8 @@ const React = {
     useContext,
     useEffect,
     useLayoutEffect,
-    useRef
+    useRef,
+    useImperativeHandle
 }
 
 export default React;
